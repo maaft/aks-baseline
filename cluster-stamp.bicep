@@ -49,14 +49,6 @@ param kubernetesVersion string = '1.27.3'
 @description('Domain name to use for App Gateway and AKS ingress.')
 param domainName string = 'contoso.com'
 
-@description('Your cluster will be bootstrapped from this git repo.')
-@minLength(9)
-param gitOpsBootstrappingRepoHttpsUrl string = 'https://github.com/mspnp/aks-baseline'
-
-@description('You cluster will be bootstrapped from this branch in the identified git repo.')
-@minLength(1)
-param gitOpsBootstrappingRepoBranch string = 'main'
-
 /*** VARIABLES ***/
 
 var subRgUniqueString = uniqueString('aks', subscription().subscriptionId, resourceGroup().id)
@@ -485,7 +477,7 @@ resource maHighContainerCPUUsage 'Microsoft.Insights/metricAlerts@2018-03-01' = 
           metricNamespace: 'Insights.Container/containers'
           name: 'Metric1'
           operator: 'GreaterThan'
-          threshold: 0  // This threshold is defined in the container-azm-ms-agentconfig.yaml file.
+          threshold: 0 // This threshold is defined in the container-azm-ms-agentconfig.yaml file.
           timeAggregation: 'Average'
           skipMetricValidation: true
         }
@@ -537,7 +529,7 @@ resource maHighContainerWorkingSetMemoryUsage 'Microsoft.Insights/metricAlerts@2
           metricNamespace: 'Insights.Container/containers'
           name: 'Metric1'
           operator: 'GreaterThan'
-          threshold: 0  // This threshold is defined in the container-azm-ms-agentconfig.yaml file.
+          threshold: 0 // This threshold is defined in the container-azm-ms-agentconfig.yaml file.
           timeAggregation: 'Average'
           skipMetricValidation: true
         }
@@ -976,7 +968,7 @@ resource paAKSLinuxRestrictive 'Microsoft.Authorization/policyAssignments@2021-0
           'kube-system'
           'gatekeeper-system'
           'azure-arc'
-          'flux-system'
+          'argocd'
 
           // Known violations
           // K8sAzureAllowedSeccomp
@@ -1066,13 +1058,13 @@ resource paRoRootFilesystem 'Microsoft.Authorization/policyAssignments@2021-06-0
           'kube-system'
           'gatekeeper-system'
           'azure-arc'
-          'flux-system'
+          'argocd'
         ]
       }
       excludedContainers: {
         value: [
-          'kured'   // Kured
-          'aspnet-webapp-sample'   // ASP.NET Core does not support read-only root
+          'kured' // Kured
+          'aspnet-webapp-sample' // ASP.NET Core does not support read-only root
         ]
       }
       effect: {
@@ -1081,7 +1073,6 @@ resource paRoRootFilesystem 'Microsoft.Authorization/policyAssignments@2021-06-0
     }
   }
 }
-
 
 // Applying the built-in 'AKS container CPU and memory resource limits should not exceed the specified limits' policy at the resource group level.
 // Constraint Name: K8sAzureContainerLimits
@@ -1105,7 +1096,7 @@ resource paEnforceResourceLimits 'Microsoft.Authorization/policyAssignments@2021
           'kube-system'
           'gatekeeper-system'
           'azure-arc'
-          'flux-system'
+          'argocd'
         ]
       }
       effect: {
@@ -1159,7 +1150,7 @@ resource paAllowedHostPaths 'Microsoft.Authorization/policyAssignments@2021-06-0
           'kube-system'
           'gatekeeper-system'
           'azure-arc'
-          'flux-system'
+          'argocd'
         ]
       }
       allowedHostPaths: {
@@ -1193,7 +1184,7 @@ resource paAllowedExternalIPs 'Microsoft.Authorization/policyAssignments@2021-06
         ]
       }
       allowedExternalIPs: {
-        value: []  // None allowed, internal load balancer IP only supported.
+        value: [] // None allowed, internal load balancer IP only supported.
       }
       effect: {
         value: 'Deny'
@@ -1322,7 +1313,7 @@ resource paAzurePolicyEnabled 'Microsoft.Authorization/policyAssignments@2021-06
     policyDefinitionId: pdAzurePolicyEnabledId
     parameters: {
       effect: {
-        value: 'Audit'  // This policy (as of 1.0.2) does not have a Deny option, otherwise that would be set here.
+        value: 'Audit' // This policy (as of 1.0.2) does not have a Deny option, otherwise that would be set here.
       }
     }
   }
@@ -1339,7 +1330,7 @@ resource paAuthorizedIpRangesDefined 'Microsoft.Authorization/policyAssignments@
     policyDefinitionId: pdAuthorizedIpRangesDefinedId
     parameters: {
       effect: {
-        value: 'Audit'  // This policy (as of 2.0.1) does not have a Deny option, otherwise that would be set here.
+        value: 'Audit' // This policy (as of 2.0.1) does not have a Deny option, otherwise that would be set here.
       }
     }
   }
@@ -1356,7 +1347,7 @@ resource paOldKuberentesDisabled 'Microsoft.Authorization/policyAssignments@2021
     policyDefinitionId: pdOldKuberentesDisabledId
     parameters: {
       effect: {
-        value: 'Audit'  // This policy (as of 1.0.2) does not have a Deny option, otherwise that would be set here.
+        value: 'Audit' // This policy (as of 1.0.2) does not have a Deny option, otherwise that would be set here.
       }
     }
   }
@@ -1373,7 +1364,7 @@ resource paRbacEnabled 'Microsoft.Authorization/policyAssignments@2021-06-01' = 
     policyDefinitionId: pdRbacEnabledId
     parameters: {
       effect: {
-        value: 'Audit'  // This policy (as of 1.0.2) does not have a Deny option, otherwise that would be set here.
+        value: 'Audit' // This policy (as of 1.0.2) does not have a Deny option, otherwise that would be set here.
       }
     }
   }
@@ -1390,7 +1381,7 @@ resource paManagedIdentitiesEnabled 'Microsoft.Authorization/policyAssignments@2
     policyDefinitionId: pdManagedIdentitiesEnabledId
     parameters: {
       effect: {
-        value: 'Audit'  // This policy (as of 1.0.0) does not have a Deny option, otherwise that would be set here.
+        value: 'Audit' // This policy (as of 1.0.0) does not have a Deny option, otherwise that would be set here.
       }
     }
   }
@@ -1815,7 +1806,7 @@ resource mc 'Microsoft.ContainerService/managedClusters@2023-02-02-preview' = {
         enabled: false // This is for the AKS-PrometheusAddonPreview, which is not enabled in this cluster as Container Insights is already collecting.
       }
     }
-    storageProfile: {  // By default, do not support native state storage, enable as needed to support workloads that require state
+    storageProfile: {// By default, do not support native state storage, enable as needed to support workloads that require state
       blobCSIDriver: {
         enabled: false // Azure Blobs
       }
@@ -2012,75 +2003,6 @@ resource mc_diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01
       }
     ]
   }
-}
-
-// Ensures that flux add-on (extension) is installed.
-resource mcFlux_extension 'Microsoft.KubernetesConfiguration/extensions@2021-09-01' = {
-  scope: mc
-  name: 'flux'
-  properties: {
-    extensionType: 'microsoft.flux'
-    autoUpgradeMinorVersion: true
-    releaseTrain: 'Stable'
-    scope: {
-      cluster: {
-        releaseNamespace: 'flux-system'
-      }
-    }
-    configurationSettings: {
-      'helm-controller.enabled': 'false'
-      'source-controller.enabled': 'true'
-      'kustomize-controller.enabled': 'true'
-      'notification-controller.enabled': 'true'  // As of testing on 29-Dec, this is required to avoid an error.  Normally it's not a required controller. YMMV
-      'image-automation-controller.enabled': 'false'
-      'image-reflector-controller.enabled': 'false'
-    }
-    configurationProtectedSettings: {}
-  }
-  dependsOn: [
-    acrKubeletAcrPullRole_roleAssignment
-  ]
-}
-
-// Bootstraps your cluster using content from your repo.
-resource mc_fluxConfiguration 'Microsoft.KubernetesConfiguration/fluxConfigurations@2022-03-01' = {
-  scope: mc
-  name: 'bootstrap'
-  properties: {
-    scope: 'cluster'
-    namespace: 'flux-system'
-    sourceKind: 'GitRepository'
-    gitRepository: {
-      url: gitOpsBootstrappingRepoHttpsUrl
-      timeoutInSeconds: 180
-      syncIntervalInSeconds: 300
-      repositoryRef: {
-        branch: gitOpsBootstrappingRepoBranch
-        tag: null
-        semver: null
-        commit: null
-      }
-      sshKnownHosts: ''
-      httpsUser: null
-      httpsCACert: null
-      localAuthRef: null
-    }
-    kustomizations: {
-      unified: {
-        path: './cluster-manifests'
-        dependsOn: []
-        timeoutInSeconds: 300
-        syncIntervalInSeconds: 300
-        retryIntervalInSeconds: 300
-        prune: true
-        force: false
-      }
-    }
-  }
-  dependsOn: [
-    mcFlux_extension
-    acrKubeletAcrPullRole_roleAssignment
-  ]
 }
 
 module ndEnsureClusterUserAssignedHasRbacToManageVMSS 'nested_EnsureClusterUserAssignedHasRbacToManageVMSS.bicep' = {
